@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tviz installer.  curl -fsSL https://raw.githubusercontent.com/SichangHe/tviz/main/install.sh | bash -s -- [OPTIONS]
 #   --iterm2         macOS: viz pane in iTerm2's sidebar (default on macOS; needs iTerm2 3.6+)
-  --client         macOS: install the standalone tviz.app instead
+#   --client         macOS: install the standalone tviz.app instead
 #   --server         install `viz` + viz server (default on Linux)
 #   --host HOST      client: also print/run the ssh forward to HOST
 #   --autossh        client with --host: start a persistent autossh forward now
@@ -12,8 +12,9 @@
 #   --uninstall      remove what this script installed for the chosen role
 set -euo pipefail
 usage() { cat <<'U'
-tviz installer: bash install.sh [--client|--server] [OPTIONS]
-  --client         install tviz.app (default on macOS)
+tviz installer: bash install.sh [--iterm2|--client|--server] [OPTIONS]
+  --iterm2         macOS: viz pane in iTerm2's sidebar (default on macOS; needs iTerm2 3.6+)
+  --client         macOS: install the standalone tviz.app instead
   --server         install `viz` + viz server (default on Linux)
   --host HOST      client: name the server for the ssh forward
   --autossh        client with --host: start a persistent autossh forward now
