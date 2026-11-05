@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Render a visualization to a PNG that Zulip shows inline.
+# usage: viz-png FILE   (.html .svg .md .mmd → PNG; .png .jpg .gif .webp pass through)
+# prints the PNG path; send it with: amh tell human --subject S --attach PNG TEXT
+set -euo pipefail
+src="$(realpath "${1:?usage: viz-png FILE}")"
+out="${TVIZ_OUT:-$HOME/.terminal_viz/out}"; mkdir -p "$out"
+base="$(basename "${src%.*}")"; ext="${src##*.}"
+case "$ext" in png|jpg|jpeg|gif|webp) echo "$src"; exit 0;; esac
+html="$out/$base.render.html"
+esc() { python3 -c 'import html,sys;print(html.escape(open(sys.argv[1]).read()))' "$1"; }
+head='<!doctype html><meta charset=utf-8><body style="margin:16px;background:#fff;font:15px system-ui,sans-serif;max-width:1100px"><style>table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:4px 8px}</style>'
+case "$ext" in
+  html|htm) cp "$src" "$html";;
+  svg) echo "$head<img src=\"file://$src\" style=\"max-width:100%\">" >"$html";;
+  md) { echo "$head<div id=c></div><script src=https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js></script><textarea id=s hidden>"; esc "$src"; echo '</textarea><script>c.innerHTML=marked.parse(s.value)</script>'; } >"$html";;
+  mmd) { echo "$head<pre class=mermaid>"; esc "$src"; echo '</pre><script type=module>import m from "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs";m.initialize({startOnLoad:true})</script>'; } >"$html";;
+  *) { echo "$head<pre>"; esc "$src"; echo '</pre>'; } >"$html";;
+esac
+png="$out/$base.$ext.png"
+google-chrome --headless=new --disable-gpu --hide-scrollbars --allow-file-access-from-files \
+  --virtual-time-budget=5000 --window-size="${TVIZ_SIZE:-1200,3000}" \
+  --screenshot="$png" "file://$html" >/dev/null 2>&1
+convert "$png" -trim +repage -bordercolor white -border 16 "$png"
+echo "$png"
