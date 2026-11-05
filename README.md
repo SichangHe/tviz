@@ -60,3 +60,10 @@ revert: stop `server.py`; delete this dir and `~/.terminal_viz`
 - viz link: ssh with `-L 8790:127.0.0.1:8790` (or the autossh line above)
 - server must allow the app origin `tauri://localhost` (done in `LOCAL_ORIGIN`)
 - revert: delete `tviz.app`; keep using Kitty
+
+## install
+
+```
+curl -fsSL https://raw.githubusercontent.com/SichangHe/tviz/main/install.sh | bash            # Mac: app; Linux: server
+curl -fsSL https://raw.githubusercontent.com/SichangHe/tviz/main/install.sh | bash -s -- --help
+```
