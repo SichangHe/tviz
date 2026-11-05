@@ -1,0 +1,12 @@
+{
+  "productName": "tviz",
+  "version": "0.1.0",
+  "identifier": "dev.sichanghe.tviz",
+  "build": { "frontendDist": "../ui" },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [{ "title": "tviz", "width": 1400, "height": 900 }],
+    "security": { "csp": "default-src 'self' ipc: http://ipc.localhost; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' http://localhost:8790 data:; frame-src http://localhost:8790; connect-src ipc: http://ipc.localhost http://localhost:8790 ws://localhost:8790" }
+  },
+  "bundle": { "active": true, "targets": ["app"], "icon": ["icons/icon.png"] }
+}

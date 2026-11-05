@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Publish a visualization to the terminal_viz pane.
+# usage: viz FILE [NAME]   |   CMD | viz - NAME.ext
+# Supported: .html .svg .png .jpg .gif .md .mmd (mermaid) .txt
+set -euo pipefail
+spool="${TVIZ_SPOOL:-$HOME/.terminal_viz/items}"
+mkdir -p "$spool"
+src="${1:?usage: viz FILE [NAME] | viz - NAME.ext}"
+name="${2:-$(basename "$src")}"
+[[ "$name" == */* || "$name" == .* || -z "$name" ]] && { echo "viz: NAME must be a plain file name" >&2; exit 2; }
+[[ "$src" == - && -z "${2:-}" ]] && { echo "viz: stdin needs NAME.ext" >&2; exit 2; }
+# NAME without extension inherits FILE's, since the page picks the renderer by extension.
+[[ "$name" != *.* && "$src" != - && "$(basename "$src")" == *.* ]] && name="$name.${src##*.}"
+tmp="$spool/.$name.$$"
+if [[ "$src" == - ]]; then cat >"$tmp"; else cp "$src" "$tmp"; fi
+mv "$tmp" "$spool/$name"
+echo "viz: shown $name"
