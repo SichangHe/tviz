@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # tviz installer.  curl -fsSL https://raw.githubusercontent.com/SichangHe/tviz/main/install.sh | bash -s -- [OPTIONS]
-#   --client         install tviz.app (default on macOS)
+#   --iterm2         macOS: viz pane in iTerm2's sidebar (default on macOS; needs iTerm2 3.6+)
+  --client         macOS: install the standalone tviz.app instead
 #   --server         install `viz` + viz server (default on Linux)
 #   --host HOST      client: also print/run the ssh forward to HOST
 #   --autossh        client with --host: start a persistent autossh forward now
@@ -26,16 +27,41 @@ U
 REPO=SichangHe/tviz REF=main ROLE= HOST= AUTOSSH=0 SERVICE=1 UNINSTALL=0
 APP_DIR= BIN_DIR="$HOME/.local/bin" SHARE="$HOME/.local/share/tviz"
 while (($#)); do case "$1" in
-  --client) ROLE=client;; --server) ROLE=server;;
+  --client) ROLE=client;; --iterm2) ROLE=iterm2;; --server) ROLE=server;;
   --host) HOST="$2"; shift;; --autossh) AUTOSSH=1;;
   --app-dir) APP_DIR="$2"; shift;; --bin-dir) BIN_DIR="$2"; shift;;
   --no-service) SERVICE=0;; --ref) REF="$2"; shift;; --uninstall) UNINSTALL=1;;
   -h|--help) usage; exit 0;;
   *) echo "unknown option: $1" >&2; exit 2;;
 esac; shift; done
-[[ -n $ROLE ]] || { [[ $(uname) == Darwin ]] && ROLE=client || ROLE=server; }
+[[ -n $ROLE ]] || { [[ $(uname) == Darwin ]] && ROLE=iterm2 || ROLE=server; }
 say() { printf '\033[1m==> %s\033[0m\n' "$*"; }
 forward="ssh -N -L 8790:127.0.0.1:8790 ${HOST:-HOST}"
+
+keep_forward() {
+  if ((AUTOSSH)) && [[ -n $HOST ]]; then
+    command -v autossh >/dev/null || { echo "autossh missing: brew install autossh" >&2; exit 1; }
+    autossh -M 0 -f -N -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -L 8790:127.0.0.1:8790 "$HOST"
+    say "autossh forward to $HOST started"
+  else
+    echo "viz needs a forward to the server, e.g.: $forward"
+    echo "  or add  LocalForward 8790 127.0.0.1:8790  to that host in ~/.ssh/config"
+    echo "  or rerun with --host HOST --autossh to keep one alive"
+  fi
+}
+
+iterm2() {
+  [[ $(uname) == Darwin ]] || { echo "iTerm2 is macOS only" >&2; exit 1; }
+  dir="$HOME/Library/Application Support/iTerm2/Scripts/AutoLaunch"
+  if ((UNINSTALL)); then rm -f "$dir/tviz.py"; say "removed $dir/tviz.py"; return; fi
+  [[ -d /Applications/iTerm.app ]] || echo "iTerm2 not found: brew install --cask iterm2 (3.6+)"
+  mkdir -p "$dir"
+  curl -fsSL -o "$dir/tviz.py" "https://raw.githubusercontent.com/$REPO/$REF/iterm2/tviz.py"
+  defaults write com.googlecode.iterm2 EnableAPIServer -bool true
+  say "installed $dir/tviz.py"
+  echo "restart iTerm2; if asked, allow the Python runtime download and the tviz script's API access"
+  keep_forward
+}
 
 client() {
   [[ $(uname) == Darwin ]] || { echo "tviz.app is macOS only" >&2; exit 1; }
@@ -48,14 +74,7 @@ client() {
   rm -rf "$APP_DIR/tviz.app"; mv "$tmp/tviz.app" "$APP_DIR/"
   xattr -dr com.apple.quarantine "$APP_DIR/tviz.app" 2>/dev/null || true  # unsigned build
   say "installed $APP_DIR/tviz.app"
-  if ((AUTOSSH)) && [[ -n $HOST ]]; then
-    command -v autossh >/dev/null || { echo "autossh missing: brew install autossh" >&2; exit 1; }
-    autossh -M 0 -f -N -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -L 8790:127.0.0.1:8790 "$HOST"
-    say "autossh forward to $HOST started"
-  else
-    echo "viz pane needs a forward to the server, e.g. inside tviz: $forward"
-    echo "  or rerun with --host HOST --autossh to keep one alive"
-  fi
+  keep_forward
   open "$APP_DIR/tviz.app"
 }
 

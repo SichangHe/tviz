@@ -67,3 +67,12 @@ revert: stop `server.py`; delete this dir and `~/.terminal_viz`
 curl -fsSL https://raw.githubusercontent.com/SichangHe/tviz/main/install.sh | bash            # Mac: app; Linux: server
 curl -fsSL https://raw.githubusercontent.com/SichangHe/tviz/main/install.sh | bash -s -- --help
 ```
+
+## iTerm2 mode (default on macOS)
+
+🧑 "Do we fork iTerm2?" — tried without a fork first
+- `iterm2/tviz.py`: iTerm2 AutoLaunch script (Python API)
+    - registers a toolbelt (window sidebar) web view at `http://localhost:8790`
+    - opens the toolbelt whenever a new viz item is published
+- needs iTerm2 3.6+, Python API enabled, the ssh forward to 8790
+- untested in a real iTerm2; logic tested against a stub of the `iterm2` module
